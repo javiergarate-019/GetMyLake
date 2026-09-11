@@ -69,6 +69,12 @@ dotnet run --project src/GetMyLake.Cli -- search-uruguay `
   --output results/uruguay-lakes.csv
 ```
 
+Look up the geographic coordinates and bounds of any ranked feature:
+
+```powershell
+dotnet run --project src/GetMyLake.Cli -- lake-info 188254
+```
+
 ## Planned data sources
 
 - [HydroLAKES](https://www.hydrosheds.org/products/hydrolakes) for candidate lakes.

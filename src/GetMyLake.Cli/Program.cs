@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Globalization;
+using GetMyLake.Core.Data;
 using GetMyLake.Core.Matching;
 using GetMyLake.Core.Search;
 using NetTopologySuite.IO;
@@ -8,6 +10,7 @@ return args.Length == 0 || args[0] is "--help" or "-h"
     : args[0].ToLowerInvariant() switch
     {
         "compare-wkt" => CompareWkt(args),
+        "lake-info" => LakeInfo(args),
         "search-uruguay" => SearchUruguay(args),
         _ => UnknownCommand(args[0])
     };
@@ -98,6 +101,47 @@ static int SearchUruguay(string[] arguments)
     }
 }
 
+static int LakeInfo(string[] arguments)
+{
+    try
+    {
+        if (arguments.Length < 2 || !long.TryParse(arguments[1], out var lakeId))
+        {
+            throw new ArgumentException("lake-info requires a numeric HydroLAKES ID.");
+        }
+
+        var values = ParseOptions(arguments.Skip(2).ToArray());
+        var hydroLakes = Get(
+            values,
+            "--hydrolakes",
+            "data/hydrolakes/HydroLAKES_polys_v10_shp/HydroLAKES_polys_v10.shp");
+        RequireFile(hydroLakes, "HydroLAKES");
+
+        var lake = new HydroLakesReader().Read(hydroLakes).FirstOrDefault(item => item.Id == lakeId)
+            ?? throw new InvalidOperationException($"HydroLAKES ID {lakeId} was not found.");
+        var centroid = lake.Geometry.Centroid;
+        var inside = lake.Geometry.InteriorPoint;
+        var bounds = lake.Geometry.EnvelopeInternal;
+
+        Console.WriteLine($"HydroLAKES ID: {lake.Id}");
+        Console.WriteLine($"Name: {DisplayName(lake.Name)}");
+        Console.WriteLine($"Country: {DisplayName(lake.Country)}");
+        Console.WriteLine($"Area: {lake.AreaKm2.ToString("0.###", CultureInfo.InvariantCulture)} km2");
+        Console.WriteLine($"Type: {LakeTypeName(lake.LakeType)}");
+        Console.WriteLine($"Interior point: {Coordinate(inside.Y)}, {Coordinate(inside.X)} (latitude, longitude)");
+        Console.WriteLine($"Centroid: {Coordinate(centroid.Y)}, {Coordinate(centroid.X)} (latitude, longitude)");
+        Console.WriteLine(
+            $"Bounds: latitude {Coordinate(bounds.MinY)} to {Coordinate(bounds.MaxY)}; " +
+            $"longitude {Coordinate(bounds.MinX)} to {Coordinate(bounds.MaxX)}");
+        return 0;
+    }
+    catch (Exception exception)
+    {
+        Console.Error.WriteLine($"Lake lookup failed: {exception.Message}");
+        return 2;
+    }
+}
+
 static Dictionary<string, string> ParseOptions(string[] arguments)
 {
     if (arguments.Length % 2 != 0)
@@ -139,6 +183,8 @@ static void RequireFile(string path, string label)
 
 static string DisplayName(string value) => string.IsNullOrWhiteSpace(value) ? "Unnamed" : value;
 
+static string Coordinate(double value) => value.ToString("0.000000", CultureInfo.InvariantCulture);
+
 static string LakeTypeName(int lakeType) => lakeType switch
 {
     1 => "Lake",
@@ -159,6 +205,7 @@ static int PrintHelp(int exitCode)
     Console.WriteLine();
     Console.WriteLine("Commands:");
     Console.WriteLine("  compare-wkt <reference-wkt> <candidate-wkt>");
+    Console.WriteLine("  lake-info <HydroLAKES-ID> [--hydrolakes <path>]");
     Console.WriteLine("  search-uruguay [options]");
     Console.WriteLine();
     Console.WriteLine("search-uruguay options:");
