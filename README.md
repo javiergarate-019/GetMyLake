@@ -15,8 +15,13 @@ The initial geometry engine can:
 - calculate Intersection over Union (IoU);
 - find the best rotation using a coarse-to-fine search.
 
-Dataset ingestion, candidate filtering, CSV output, and comparison images are
-the next implementation stages.
+The end-to-end Uruguay search also supports:
+
+- streaming all 1.4 million HydroLAKES records without loading the dataset at once;
+- a local Lambert azimuthal equal-area projection for every source geometry;
+- rotation-invariant compactness and elongation prefiltering;
+- parallel coarse-to-fine IoU matching of the retained candidates;
+- ranked CSV output with HydroLAKES identifiers and metadata.
 
 ## Requirements
 
@@ -37,6 +42,33 @@ dotnet run --project src/GetMyLake.Cli -- compare-wkt `
   "POLYGON ((10 10, 14 10, 11 13, 10 10))"
 ```
 
+## Search HydroLAKES for Uruguay-shaped lakes
+
+Place the extracted datasets at the default paths shown below, then run:
+
+```powershell
+dotnet run --project src/GetMyLake.Cli -- search-uruguay
+```
+
+Default input files:
+
+```text
+data/natural-earth/ne_10m_admin_0_countries.shp
+data/hydrolakes/HydroLAKES_polys_v10_shp/HydroLAKES_polys_v10.shp
+```
+
+The default result is `results/uruguay-lakes.csv`. Input paths and search size
+can be changed explicitly:
+
+```powershell
+dotnet run --project src/GetMyLake.Cli -- search-uruguay `
+  --natural-earth data/natural-earth/ne_10m_admin_0_countries.shp `
+  --hydrolakes data/hydrolakes/HydroLAKES_polys_v10_shp/HydroLAKES_polys_v10.shp `
+  --prefilter 1000 `
+  --top 20 `
+  --output results/uruguay-lakes.csv
+```
+
 ## Planned data sources
 
 - [HydroLAKES](https://www.hydrosheds.org/products/hydrolakes) for candidate lakes.
@@ -44,3 +76,6 @@ dotnet run --project src/GetMyLake.Cli -- compare-wkt `
 
 The matching engine is not tied to either dataset. Future adapters can accept
 other reference shapes and candidate polygon collections.
+
+HydroLAKES is distributed under the Creative Commons Attribution 4.0 license.
+Downloaded datasets and generated results are intentionally excluded from Git.

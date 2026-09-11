@@ -1,5 +1,6 @@
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Utilities;
+using NetTopologySuite.Simplify;
 
 namespace GetMyLake.Core.Normalization;
 
@@ -8,7 +9,10 @@ namespace GetMyLake.Core.Normalization;
 /// </summary>
 public sealed class GeometryNormalizer
 {
-    public Geometry Normalize(Geometry geometry)
+    public Geometry Normalize(
+        Geometry geometry,
+        double simplificationTolerance = 0,
+        bool repairInvalid = true)
     {
         ArgumentNullException.ThrowIfNull(geometry);
 
@@ -17,7 +21,9 @@ public sealed class GeometryNormalizer
             throw new ArgumentException("The geometry must not be empty.", nameof(geometry));
         }
 
-        var repaired = geometry.IsValid ? geometry.Copy() : GeometryFixer.Fix(geometry);
+        var repaired = !repairInvalid || geometry.IsValid
+            ? geometry.Copy()
+            : GeometryFixer.Fix(geometry);
         var polygon = FindLargestPolygon(repaired)
             ?? throw new ArgumentException("The geometry does not contain a polygon.", nameof(geometry));
 
@@ -34,17 +40,36 @@ public sealed class GeometryNormalizer
             .Transform(outline);
 
         var scale = 1.0 / Math.Sqrt(centered.Area);
-        return AffineTransformation.ScaleInstance(scale, scale).Transform(centered);
+        var normalized = AffineTransformation.ScaleInstance(scale, scale).Transform(centered);
+
+        if (simplificationTolerance <= 0)
+        {
+            return normalized;
+        }
+
+        var simplified = DouglasPeuckerSimplifier.Simplify(normalized, simplificationTolerance);
+        return simplified.IsEmpty ? normalized : simplified;
     }
 
     private static Polygon? FindLargestPolygon(Geometry geometry)
     {
+        if (geometry is Polygon polygonGeometry)
+        {
+            return polygonGeometry;
+        }
+
         Polygon? largest = null;
 
         for (var index = 0; index < geometry.NumGeometries; index++)
         {
             var component = geometry.GetGeometryN(index);
-            if (component is Polygon polygon && (largest is null || polygon.Area > largest.Area))
+            if (ReferenceEquals(component, geometry))
+            {
+                continue;
+            }
+
+            var polygon = FindLargestPolygon(component);
+            if (polygon is not null && (largest is null || polygon.Area > largest.Area))
             {
                 largest = polygon;
             }

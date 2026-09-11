@@ -480,3 +480,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Downloaded geospatial datasets and generated search artifacts
+/data/
+/results/
