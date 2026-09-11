@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GetMyLake.Cli/GetMyLake.Cli.csproj" />
+    <Project Path="src/GetMyLake.Core/GetMyLake.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GetMyLake.Core.Tests/GetMyLake.Core.Tests.csproj" />
+  </Folder>
+</Solution>
