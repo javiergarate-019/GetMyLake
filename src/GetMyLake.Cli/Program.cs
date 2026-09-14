@@ -2,7 +2,10 @@ using System.Diagnostics;
 using System.Globalization;
 using GetMyLake.Core.Data;
 using GetMyLake.Core.Matching;
+using GetMyLake.Core.Normalization;
+using GetMyLake.Core.Projection;
 using GetMyLake.Core.Search;
+using GetMyLake.Core.Visualization;
 using NetTopologySuite.IO;
 
 return args.Length == 0 || args[0] is "--help" or "-h"
@@ -49,6 +52,7 @@ static int SearchUruguay(string[] arguments)
             "--hydrolakes",
             "data/hydrolakes/HydroLAKES_polys_v10_shp/HydroLAKES_polys_v10.shp");
         var output = Get(values, "--output", "results/uruguay-lakes.csv");
+        var images = Get(values, "--images", "results/uruguay-images");
         var options = new LakeSearchOptions
         {
             PrefilterCount = GetInt(values, "--prefilter", 500),
@@ -75,6 +79,11 @@ static int SearchUruguay(string[] arguments)
                 $"retained={progress.RetainedCandidates:N0}; errors={progress.Errors:N0}"));
 
         CsvResultWriter.Write(output, results);
+        var reference = new GeometryNormalizer().Normalize(
+            new LambertAzimuthalEqualAreaProjector().Project(
+                new NaturalEarthCountryReader().ReadByCode(naturalEarth, "URY")),
+            options.SimplificationTolerance);
+        var imagePaths = new ComparisonRenderer().WriteAll(images, reference, results);
         stopwatch.Stop();
 
         Console.WriteLine();
@@ -91,6 +100,7 @@ static int SearchUruguay(string[] arguments)
 
         Console.WriteLine();
         Console.WriteLine($"CSV: {Path.GetFullPath(output)}");
+        Console.WriteLine($"Images: {Path.GetFullPath(images)} ({imagePaths.Count} PNG files)");
         Console.WriteLine($"Elapsed: {stopwatch.Elapsed}");
         return 0;
     }
@@ -212,6 +222,7 @@ static int PrintHelp(int exitCode)
     Console.WriteLine("  --natural-earth <path>  Natural Earth countries Shapefile");
     Console.WriteLine("  --hydrolakes <path>     HydroLAKES polygons Shapefile");
     Console.WriteLine("  --output <path>         Output CSV (default: results/uruguay-lakes.csv)");
+    Console.WriteLine("  --images <directory>   Comparison PNGs (default: results/uruguay-images)");
     Console.WriteLine("  --prefilter <count>     Candidates retained for IoU (default: 500)");
     Console.WriteLine("  --top <count>           Ranked results written (default: 20)");
     Console.WriteLine("  --threads <count>       Fine-matching parallelism");

@@ -1,3 +1,5 @@
+using NetTopologySuite.Geometries;
+
 namespace GetMyLake.Core.Search;
 
 public sealed record LakeMatchResult(
@@ -7,4 +9,5 @@ public sealed record LakeMatchResult(
     double AreaKm2,
     int LakeType,
     double Similarity,
-    double BestRotationDegrees);
+    double BestRotationDegrees,
+    Geometry NormalizedGeometry);

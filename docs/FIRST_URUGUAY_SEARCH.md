@@ -64,5 +64,7 @@ HydroLAKES:    9EF63498569DD7CCD0B8D8852DA026E009A75F42D293F00E483F3B9FCFE8E1F9
 This is an exploratory ranking, not a mathematical proof that feature `188254`
 is the globally optimal IoU match. Fine IoU was applied to the 1,000 candidates
 selected by the inexpensive descriptors rather than to all 1.4 million shapes.
-Comparison overlays and broader prefilter sensitivity runs are the next checks
-for visual quality and ranking stability.
+Automated comparison PNGs were added and visually reviewed on 2026-09-14. Each
+image shows Uruguay, the rotated lake, and a transparent overlay at one shared
+scale. The broader prefilter sensitivity runs remain the next check for ranking
+stability.

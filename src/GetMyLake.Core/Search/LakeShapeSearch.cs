@@ -90,7 +90,8 @@ public sealed class LakeShapeSearch(
                         candidate.AreaKm2,
                         candidate.LakeType,
                         match.Similarity,
-                        match.RotationDegrees));
+                        match.RotationDegrees,
+                        candidate.Geometry.Copy()));
                 }
                 catch (Exception exception) when (exception is ArgumentException or TopologyException or ArithmeticException)
                 {

@@ -21,7 +21,8 @@ The end-to-end Uruguay search also supports:
 - a local Lambert azimuthal equal-area projection for every source geometry;
 - rotation-invariant compactness and elongation prefiltering;
 - parallel coarse-to-fine IoU matching of the retained candidates;
-- ranked CSV output with HydroLAKES identifiers and metadata.
+- ranked CSV output with HydroLAKES identifiers and metadata;
+- comparison PNGs showing Uruguay, each finalist lake, and their aligned overlay.
 
 ## Requirements
 
@@ -66,8 +67,13 @@ dotnet run --project src/GetMyLake.Cli -- search-uruguay `
   --hydrolakes data/hydrolakes/HydroLAKES_polys_v10_shp/HydroLAKES_polys_v10.shp `
   --prefilter 1000 `
   --top 20 `
-  --output results/uruguay-lakes.csv
+  --output results/uruguay-lakes.csv `
+  --images results/uruguay-images
 ```
+
+Each search also generates one PNG per ranked result. Every image uses the same
+scale across its three panels and shows `Uruguay | Lake | Overlay`, with the
+candidate rotated by its best-scoring angle.
 
 Look up the geographic coordinates and bounds of any ranked feature:
 
